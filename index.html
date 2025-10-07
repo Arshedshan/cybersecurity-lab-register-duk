@@ -54,11 +54,12 @@
         <div id="appSection" class="card" style="display: none;">
             <h2 class="text-xl font-semibold text-center mb-2">Welcome, <span id="studentName"></span>!</h2>
             <p class="text-center text-gray-500 mb-6" id="studentRollNumber"></p>
-            <div id="actionButtons">
-                 <button id="enterBtn" class="btn btn-primary mb-4">Enter Lab</button>
-                 <button id="exitBtn" class="btn btn-danger" style="display: none;">Exit Lab</button>
+            <div id="actionButtons" class="mb-4">
+                <button id="enterBtn" class="btn btn-primary">Enter Lab</button>
+                <button id="exitBtn" class="btn btn-danger" style="display: none;">Exit Lab</button>
+                 <p id="exitWarning" class="text-yellow-700 bg-yellow-100 p-3 rounded-lg text-center mt-3 text-sm" style="display: none;"><b>Important:</b> Please use this same browser when you exit to ensure your time is calculated correctly.</p>
             </div>
-             <div id="actionLoader" class="loader" style="display: none;"></div>
+            <div id="actionLoader" class="loader" style="display: none;"></div>
             <button id="historyBtn" class="btn btn-secondary">View My History</button>
             <button id="studentLogoutBtn" class="btn btn-outline mt-3">Logout</button>
         </div>
@@ -69,13 +70,13 @@
                 <h2 class="text-xl font-bold">My Lab History</h2>
                 <button class="back-to-app text-gray-600 hover:text-gray-900">&larr; Back</button>
             </div>
-             <div id="historyLoader" class="loader" style="display: none;"></div>
+            <div id="historyLoader" class="loader" style="display: none;"></div>
             <div id="historyContent" class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Exit</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th></tr></thead>
                     <tbody id="historyTableBody" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
-                 <p id="noHistory" class="text-center text-gray-500 py-4" style="display: none;">No history found.</p>
+                <p id="noHistory" class="text-center text-gray-500 py-4" style="display: none;">No history found.</p>
             </div>
         </div>
 
@@ -104,10 +105,10 @@
                 </div>
                 <div id="dateHistoryLoader" class="loader" style="display: none;"></div>
                 <table class="min-w-full divide-y divide-gray-200">
-                     <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roll No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Exit</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th></tr></thead>
+                        <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roll No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Exit</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th></tr></thead>
                     <tbody id="dateHistoryTableBody" class="bg-white divide-y divide-gray-200"></tbody>
                 </table>
-                 <p id="noDateHistory" class="text-center text-gray-500 py-4" style="display: none;">No records found for the selected date.</p>
+                <p id="noDateHistory" class="text-center text-gray-500 py-4" style="display: none;">No records found for the selected date.</p>
             </div>
         </div>
 
@@ -154,6 +155,7 @@
         document.querySelectorAll('.back-to-app').forEach(btn => btn.addEventListener('click', () => showView(appSection)));
 
         document.getElementById('adminLogoutBtn').addEventListener('click', () => {
+            document.getElementById('rollNumberInput').value = '';
             document.getElementById('adminPasswordInput').value = '';
             showView(loginSection);
         });
@@ -176,6 +178,8 @@
                     currentUser = { rollNumber, name: result.name };
                     document.getElementById('studentName').textContent = currentUser.name;
                     document.getElementById('studentRollNumber').textContent = `Roll No: ${currentUser.rollNumber}`;
+                    
+                    // This logic uses the browser's localStorage
                     const storedEntryTime = localStorage.getItem(`entryTime_${currentUser.rollNumber}`);
                     if (storedEntryTime) {
                         entryTime = new Date(storedEntryTime);
@@ -185,6 +189,7 @@
                     }
                     showView(appSection);
                 } else if (result.role === 'admin') {
+                    currentUser = { rollNumber }; // Temporarily store admin roll number for password check
                     showView(adminLoginSection);
                 } else {
                     showError('loginError', "Roll number not found.");
@@ -207,7 +212,7 @@
             document.getElementById('submitAdminPassword').disabled = true;
 
             try {
-                const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=verifyAdmin&password=${password}`);
+                const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=verifyAdmin&rollNumber=${currentUser.rollNumber}&password=${password}`);
                 if(!response.ok) throw new Error(`Server error: ${response.statusText}`);
                 const result = await response.json();
 
@@ -222,13 +227,21 @@
             } catch(error) {
                 showError('adminLoginError', `Login failed: ${error.message}`);
             } finally {
-                 hideLoader('adminLoginLoader');
-                 document.getElementById('submitAdminPassword').disabled = false;
+                hideLoader('adminLoginLoader');
+                document.getElementById('submitAdminPassword').disabled = false;
             }
         }
-
-        const showEnterButton = () => { document.getElementById('enterBtn').style.display = 'block'; document.getElementById('exitBtn').style.display = 'none'; };
-        const showExitButton = () => { document.getElementById('enterBtn').style.display = 'none'; document.getElementById('exitBtn').style.display = 'block'; };
+        
+        const showEnterButton = () => { 
+            document.getElementById('enterBtn').style.display = 'block'; 
+            document.getElementById('exitBtn').style.display = 'none'; 
+            document.getElementById('exitWarning').style.display = 'none';
+        };
+        const showExitButton = () => { 
+            document.getElementById('enterBtn').style.display = 'none'; 
+            document.getElementById('exitBtn').style.display = 'block'; 
+            document.getElementById('exitWarning').style.display = 'block';
+        };
 
         async function handleLabAction(action) {
             showLoader('actionLoader');
@@ -338,8 +351,8 @@
                 const data = await response.json();
                 if (data.history && data.history.length > 0) {
                     data.history.forEach(row => {
-                         const tr = tableBody.insertRow();
-                         tr.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.name}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.rollNumber}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.entry || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.exit || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.duration || 'N/A'}</td>`;
+                        const tr = tableBody.insertRow();
+                        tr.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.name}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.rollNumber}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.entry || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.exit || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.duration || 'N/A'}</td>`;
                     });
                 } else {
                     document.getElementById('noDateHistory').style.display = 'block';
