@@ -55,8 +55,9 @@
             <h2 class="text-xl font-semibold text-center mb-2">Welcome, <span id="studentName"></span>!</h2>
             <p class="text-center text-gray-500 mb-6" id="studentRollNumber"></p>
             <div id="actionButtons">
-                 <button id="enterBtn" class="btn btn-primary mb-4">Enter Lab</button>
-                 <button id="exitBtn" class="btn btn-danger" style="display: none;">Exit Lab</button>
+                <button id="enterBtn" class="btn btn-primary mb-4">Enter Lab</button>
+                <button id="exitBtn" class="btn btn-danger" style="display: none;">Exit Lab</button>
+                <p id="exitWarning" class="text-yellow-700 bg-yellow-100 p-3 rounded-lg text-center mt-3 text-sm" style="display: none;"><b>Important:</b> Please use this same browser when you exit to ensure your time is calculated correctly.</p>
             </div>
              <div id="actionLoader" class="loader" style="display: none;"></div>
             <button id="historyBtn" class="btn btn-secondary">View My History</button>
@@ -360,4 +361,5 @@
     </script>
 </body>
 </html>
+
 
