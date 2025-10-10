@@ -85,6 +85,32 @@
                 <h1 class="text-2xl font-bold">Admin Dashboard</h1>
                 <button id="adminLogoutBtn" class="btn btn-danger !w-auto !py-2">Logout</button>
             </div>
+            
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold mb-3">Currently in Lab (<span id="currentlyInLabCount">0</span>)</h2>
+                <div id="currentlyInLabLoader" class="loader" style="display: none;"></div>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roll No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry Time</th></tr></thead>
+                    <tbody id="currentlyInLabTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+                <p id="noOneInLab" class="text-center text-gray-500 py-4" style="display: none;">The lab is currently empty.</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-semibold mb-3">View History by Date</h2>
+                <div class="flex items-center space-x-2 mb-4">
+                    <input type="date" id="historyDateInput" class="input-field !mb-0">
+                    <button id="viewDateHistoryBtn" class="btn btn-primary !w-auto">View</button>
+                </div>
+                <div id="dateHistoryLoader" class="loader" style="display: none;"></div>
+                <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roll No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Exit</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th></tr></thead>
+                    <tbody id="dateHistoryTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+                <p id="noDateHistory" class="text-center text-gray-500 py-4" style="display: none;">No records found for the selected date.</p>
+            </div>
+            <button id="advancedFilterBtn" class="btn btn-outline mt-4">Advanced Filter by Time Range</button>
+        </div>
 
         <!-- Advanced Filter Section -->
         <div id="advancedFilterSection" class="card" style="display: none;">
@@ -120,32 +146,6 @@
                 <p id="noTimeRangeHistory" class="text-center text-gray-500 py-4" style="display: none;">No records found for this time range.</p>
             </div>
         </div>
-            
-            <div class="mb-8">
-                <h2 class="text-xl font-semibold mb-3">Currently in Lab (<span id="currentlyInLabCount">0</span>)</h2>
-                <div id="currentlyInLabLoader" class="loader" style="display: none;"></div>
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roll No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry Time</th></tr></thead>
-                    <tbody id="currentlyInLabTableBody" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
-                <p id="noOneInLab" class="text-center text-gray-500 py-4" style="display: none;">The lab is currently empty.</p>
-            </div>
-
-            <div>
-                <h2 class="text-xl font-semibold mb-3">View History by Date</h2>
-                <div class="flex items-center space-x-2 mb-4">
-                    <input type="date" id="historyDateInput" class="input-field !mb-0">
-                    <button id="viewDateHistoryBtn" class="btn btn-primary !w-auto">View</button>
-                </div>
-                <div id="dateHistoryLoader" class="loader" style="display: none;"></div>
-                <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roll No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Exit</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th></tr></thead>
-                    <tbody id="dateHistoryTableBody" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
-                <p id="noDateHistory" class="text-center text-gray-500 py-4" style="display: none;">No records found for the selected date.</p>
-            </div>
-            <button id="advancedFilterBtn" class="btn btn-outline mt-4">Advanced Filter by Time Range</button>
-        </div>
 
     </div>
 
@@ -180,25 +180,27 @@
         document.getElementById('submitRollNumber').addEventListener('click', handleUserVerification);
         document.getElementById('submitAdminPassword').addEventListener('click', handleAdminLogin);
         document.getElementById('modalCloseBtn').addEventListener('click', () => document.getElementById('messageModal').classList.remove('active'));
+        
         document.querySelector('.back-to-login').addEventListener('click', () => {
             document.getElementById('adminPasswordInput').value = '';
             showView(loginSection);
         });
+        document.querySelectorAll('.back-to-app').forEach(btn => btn.addEventListener('click', () => showView(appSection)));
         
         document.getElementById('enterBtn').addEventListener('click', () => handleLabAction('entry'));
         document.getElementById('exitBtn').addEventListener('click', () => handleLabAction('exit'));
         document.getElementById('historyBtn').addEventListener('click', showStudentHistory);
         document.getElementById('studentLogoutBtn').addEventListener('click', handleStudentLogout);
-        document.querySelectorAll('.back-to-app').forEach(btn => btn.addEventListener('click', () => showView(appSection)));
 
         document.getElementById('adminLogoutBtn').addEventListener('click', () => {
             document.getElementById('rollNumberInput').value = '';
             document.getElementById('adminPasswordInput').value = '';
             showView(loginSection);
         });
+        
         document.getElementById('viewDateHistoryBtn').addEventListener('click', fetchDateHistory);
-                document.getElementById('advancedFilterBtn').addEventListener('click', () => {
-            // Set default values when opening the advanced filter
+
+        document.getElementById('advancedFilterBtn').addEventListener('click', () => {
             const now = new Date();
             const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             
@@ -216,36 +218,6 @@
         document.querySelector('.back-to-admin-dashboard').addEventListener('click', () => showView(adminDashboardSection));
         document.querySelector('.back-to-advanced-filter').addEventListener('click', () => showView(advancedFilterSection));
         document.getElementById('viewTimeRangeHistoryBtn').addEventListener('click', fetchTimeRangeHistory);
-
-        async function fetchTimeRangeHistory() {
-            const startTime = document.getElementById('startTimeInput').value;
-            const endTime = document.getElementById('endTimeInput').value;
-            if (!startTime || !endTime) { showModal("Please select both a start and end time."); return; }
-
-            showView(timeRangeHistorySection);
-            showLoader('timeRangeHistoryLoader');
-            const tableBody = document.getElementById('timeRangeHistoryTableBody');
-            tableBody.innerHTML = '';
-            document.getElementById('noTimeRangeHistory').style.display = 'none';
-
-            try {
-                const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getTimeRangeHistory&startTime=${new Date(startTime).toISOString()}&endTime=${new Date(endTime).toISOString()}`);
-                if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const data = await response.json();
-                if (data.history && data.history.length > 0) {
-                    data.history.forEach(row => {
-                        const tr = tableBody.insertRow();
-                        tr.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.name}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.rollNumber}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.entry || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.exit || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.duration || 'N/A'}</td>`;
-                    });
-                } else {
-                    document.getElementById('noTimeRangeHistory').style.display = 'block';
-                }
-            } catch (e) {
-                showModal('Could not fetch history for the selected time range. ' + e.message);
-            } finally {
-                hideLoader('timeRangeHistoryLoader');
-            }
-        }
 
         async function handleUserVerification() {
             const rollNumber = document.getElementById('rollNumberInput').value.trim();
@@ -306,13 +278,11 @@
                     showView(adminDashboardSection);
                     fetchCurrentlyInLab();
                     
-                    // Correctly set the date picker to the user's local date
                     const today = new Date();
                     const year = today.getFullYear();
-                    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+                    const month = String(today.getMonth() + 1).padStart(2, '0');
                     const day = String(today.getDate()).padStart(2, '0');
-                    const formattedDate = `${year}-${month}-${day}`;
-                    document.getElementById('historyDateInput').value = formattedDate;
+                    document.getElementById('historyDateInput').value = `${year}-${month}-${day}`;
 
                     fetchDateHistory();
                 } else {
@@ -468,6 +438,36 @@
                 showModal('Could not fetch history for the selected date. ' + e.message);
             } finally {
                 hideLoader('dateHistoryLoader');
+            }
+        }
+
+        async function fetchTimeRangeHistory() {
+            const startTime = document.getElementById('startTimeInput').value;
+            const endTime = document.getElementById('endTimeInput').value;
+            if (!startTime || !endTime) { showModal("Please select both a start and end time."); return; }
+
+            showView(timeRangeHistorySection);
+            showLoader('timeRangeHistoryLoader');
+            const tableBody = document.getElementById('timeRangeHistoryTableBody');
+            tableBody.innerHTML = '';
+            document.getElementById('noTimeRangeHistory').style.display = 'none';
+
+            try {
+                const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getTimeRangeHistory&startTime=${new Date(startTime).toISOString()}&endTime=${new Date(endTime).toISOString()}`);
+                if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                if (data.history && data.history.length > 0) {
+                    data.history.forEach(row => {
+                        const tr = tableBody.insertRow();
+                        tr.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.name}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.rollNumber}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.entry || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.exit || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.duration || 'N/A'}</td>`;
+                    });
+                } else {
+                    document.getElementById('noTimeRangeHistory').style.display = 'block';
+                }
+            } catch (e) {
+                showModal('Could not fetch history for the selected time range. ' + e.message);
+            } finally {
+                hideLoader('timeRangeHistoryLoader');
             }
         }
 
