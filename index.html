@@ -85,6 +85,41 @@
                 <h1 class="text-2xl font-bold">Admin Dashboard</h1>
                 <button id="adminLogoutBtn" class="btn btn-danger !w-auto !py-2">Logout</button>
             </div>
+
+        <!-- Advanced Filter Section -->
+        <div id="advancedFilterSection" class="card" style="display: none;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Advanced Filter</h2>
+                <button class="back-to-admin-dashboard text-gray-600 hover:text-gray-900">&larr; Back</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="startTimeInput" class="block text-sm font-medium text-gray-700">Start Time</label>
+                    <input type="datetime-local" id="startTimeInput" class="input-field !mb-0">
+                </div>
+                <div>
+                    <label for="endTimeInput" class="block text-sm font-medium text-gray-700">End Time</label>
+                    <input type="datetime-local" id="endTimeInput" class="input-field !mb-0">
+                </div>
+            </div>
+            <button id="viewTimeRangeHistoryBtn" class="btn btn-primary mt-6">View History</button>
+        </div>
+
+        <!-- Time Range History Section -->
+        <div id="timeRangeHistorySection" class="card" style="display: none;">
+             <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Time Range History</h2>
+                <button class="back-to-advanced-filter text-gray-600 hover:text-gray-900">&larr; Back</button>
+            </div>
+            <div id="timeRangeHistoryLoader" class="loader" style="display: none;"></div>
+            <div id="timeRangeHistoryContent" class="overflow-x-auto">
+                 <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roll No</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entry</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Exit</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th></tr></thead>
+                    <tbody id="timeRangeHistoryTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+                <p id="noTimeRangeHistory" class="text-center text-gray-500 py-4" style="display: none;">No records found for this time range.</p>
+            </div>
+        </div>
             
             <div class="mb-8">
                 <h2 class="text-xl font-semibold mb-3">Currently in Lab (<span id="currentlyInLabCount">0</span>)</h2>
@@ -109,6 +144,7 @@
                 </table>
                 <p id="noDateHistory" class="text-center text-gray-500 py-4" style="display: none;">No records found for the selected date.</p>
             </div>
+            <button id="advancedFilterBtn" class="btn btn-outline mt-4">Advanced Filter by Time Range</button>
         </div>
 
     </div>
@@ -124,6 +160,8 @@
         const historySection = document.getElementById('historySection');
         const adminLoginSection = document.getElementById('adminLoginSection');
         const adminDashboardSection = document.getElementById('adminDashboardSection');
+        const advancedFilterSection = document.getElementById('advancedFilterSection');
+        const timeRangeHistorySection = document.getElementById('timeRangeHistorySection');
 
         let currentUser = null;
         let entryTime = null;
@@ -159,6 +197,55 @@
             showView(loginSection);
         });
         document.getElementById('viewDateHistoryBtn').addEventListener('click', fetchDateHistory);
+                document.getElementById('advancedFilterBtn').addEventListener('click', () => {
+            // Set default values when opening the advanced filter
+            const now = new Date();
+            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            const formatForInput = (date) => {
+                const d = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+                return d.toISOString().slice(0, 16);
+            };
+
+            document.getElementById('startTimeInput').value = formatForInput(startOfDay);
+            document.getElementById('endTimeInput').value = formatForInput(now);
+            
+            showView(advancedFilterSection);
+        });
+
+        document.querySelector('.back-to-admin-dashboard').addEventListener('click', () => showView(adminDashboardSection));
+        document.querySelector('.back-to-advanced-filter').addEventListener('click', () => showView(advancedFilterSection));
+        document.getElementById('viewTimeRangeHistoryBtn').addEventListener('click', fetchTimeRangeHistory);
+
+        async function fetchTimeRangeHistory() {
+            const startTime = document.getElementById('startTimeInput').value;
+            const endTime = document.getElementById('endTimeInput').value;
+            if (!startTime || !endTime) { showModal("Please select both a start and end time."); return; }
+
+            showView(timeRangeHistorySection);
+            showLoader('timeRangeHistoryLoader');
+            const tableBody = document.getElementById('timeRangeHistoryTableBody');
+            tableBody.innerHTML = '';
+            document.getElementById('noTimeRangeHistory').style.display = 'none';
+
+            try {
+                const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getTimeRangeHistory&startTime=${new Date(startTime).toISOString()}&endTime=${new Date(endTime).toISOString()}`);
+                if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                if (data.history && data.history.length > 0) {
+                    data.history.forEach(row => {
+                        const tr = tableBody.insertRow();
+                        tr.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.name}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.rollNumber}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.entry || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.exit || 'N/A'}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.duration || 'N/A'}</td>`;
+                    });
+                } else {
+                    document.getElementById('noTimeRangeHistory').style.display = 'block';
+                }
+            } catch (e) {
+                showModal('Could not fetch history for the selected time range. ' + e.message);
+            } finally {
+                hideLoader('timeRangeHistoryLoader');
+            }
+        }
 
         async function handleUserVerification() {
             const rollNumber = document.getElementById('rollNumberInput').value.trim();
@@ -393,5 +480,4 @@
     </script>
 </body>
 </html>
-
 
