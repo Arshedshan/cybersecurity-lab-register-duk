@@ -60,6 +60,7 @@
             </div>
             <div id="actionLoader" class="loader" style="display: none;"></div>
             <button id="historyBtn" class="btn btn-secondary">View My History</button>
+            <p id="entryTimeDisplay" class="text-center text-gray-600 mt-4" style="display: none;"></p>
             <button id="studentLogoutBtn" class="btn btn-outline mt-3">Logout</button>
         </div>
 
@@ -239,9 +240,12 @@
                     
                     if (result.status === 'in') {
                         entryTime = new Date(result.entryTime);
+                        document.getElementById('entryTimeDisplay').textContent = `Entered at: ${entryTime.toLocaleTimeString()}`;
+                        document.getElementById('entryTimeDisplay').style.display = 'block';
                         showExitButton();
                     } else {
                         entryTime = null;
+                        document.getElementById('entryTimeDisplay').style.display = 'none';
                         showEnterButton();
                     }
                     document.getElementById('rollNumberInput').value = '';
@@ -307,6 +311,8 @@
             try {
                 if (action === 'entry') {
                     entryTime = new Date();
+                    document.getElementById('entryTimeDisplay').textContent = `Entered at: ${entryTime.toLocaleTimeString()}`;
+                    document.getElementById('entryTimeDisplay').style.display = 'block';
                     await logToGoogleSheet('entry', entryTime);
                     showModal('Entry confirmed successfully!');
                     showExitButton();
@@ -321,6 +327,7 @@
                     const durationStr = formatDuration(durationMs);
                     await logToGoogleSheet('exit', exitTime, durationStr);
                     entryTime = null;
+                    document.getElementById('entryTimeDisplay').style.display = 'none';
                     showModal(`You spent ${durationStr} in the lab. Thank you.`);
                     showEnterButton();
                 }
@@ -335,6 +342,7 @@
         function handleStudentLogout() {
             currentUser = null;
             entryTime = null;
+            document.getElementById('entryTimeDisplay').style.display = 'none';
             document.getElementById('rollNumberInput').value = '';
             showView(loginSection);
         }
@@ -480,4 +488,3 @@
     </script>
 </body>
 </html>
-
